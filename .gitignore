@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Storage (uploaded files)
+backend/storage/
+*.pdf
+*.docx
+*.doc
+
+# Trained Models (large files)
+backend/trained_models/
+*.pkl
+*.model
+*.h5
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Test files (optional - uncomment if you want to ignore test files)
+# backend/test_*.py
+# test_*.py
+# testsprite_tests/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+
+
+
+

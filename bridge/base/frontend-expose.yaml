@@ -1,0 +1,18 @@
+#! frontend-expose.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: frontend
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: frontend
+spec:
+    selector:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: frontend
+    ports:
+        - name: frontend-4173
+          port: 4173
+          targetPort: frontend-4173

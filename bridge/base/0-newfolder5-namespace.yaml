@@ -1,0 +1,8 @@
+#! 0-newfolder5-namespace.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5

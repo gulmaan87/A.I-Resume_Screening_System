@@ -1,0 +1,21 @@
+#! frontend-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: frontend-published
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: frontend
+spec:
+    selector:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: frontend
+    ports:
+        - name: frontend-4173
+          port: 4173
+          protocol: TCP
+          targetPort: frontend-4173
+
+# check if there is at least one published port

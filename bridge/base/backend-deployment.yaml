@@ -1,0 +1,80 @@
+#! backend-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: backend
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: backend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: newfolder5
+            com.docker.compose.service: backend
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: newfolder5
+                com.docker.compose.service: backend
+                com.docker.compose.network.external: "true"
+                com.docker.compose.network.internal: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: resume-backend
+                  image: newfolder5-backend
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: API_PREFIX
+                      value: "/api"
+                    - name: APP_NAME
+                      value: "AI Resume Screening"
+                    - name: AWS_ACCESS_KEY
+                      value: "AKIAQCBKGK2D66PQVWMM"
+                    - name: AWS_REGION
+                      value: "us-east-1"
+                    - name: AWS_SECRET_KEY
+                      value: "lnI6NpZSfL3AdGtx21Lr6+0g9A7Z+wFc3WwdRLLr"
+                    - name: DB_NAME
+                      value: "resume_screening"
+                    - name: DB_URI
+                      value: "mongodb://admin:SecureMongoPassword123!@mongo:27017/Resume_Screening?authSource=admin"
+                    - name: EMBEDDING_MODEL_NAME
+                      value: "sentence-transformers/all-MiniLM-L6-v2"
+                    - name: ENVIRONMENT
+                      value: "production"
+                    - name: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+                      value: "30"
+                    - name: JWT_ALGORITHM
+                      value: "HS256"
+                    - name: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+                      value: "7"
+                    - name: JWT_SECRET_KEY
+                      value: "_jhlBQAY4jiShNQjYvhc3XIXY9id2mXnbtQioAzCPEI"
+                    - name: MONGO_ROOT_PASSWORD
+                      value: "SecureMongoPassword123!"
+                    - name: MONGO_ROOT_USERNAME
+                      value: "admin"
+                    - name: RESUME_MAX_SIZE_MB
+                      value: "10"
+                    - name: S3_BUCKET_NAME
+                      value: "cvbucket87"
+                    - name: SPACY_MODEL
+                      value: "en_core_web_sm"
+                    - name: VITE_API_BASE_URL
+                      value: "http://localhost:8000"
+                  livenessProbe:
+                    exec:
+                        command: ['curl -f http://localhost:8000/health']
+                    periodSeconds: 30
+                    initialDelaySeconds: 40
+                    timeoutSeconds: 10
+                    failureThreshold: 3
+                  ports:
+                    - name: backend-8000
+                      containerPort: 8000

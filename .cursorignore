@@ -1,0 +1,31 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+# Note: .env files are allowed here for AI features, but still ignored in .gitignore for security
+
+# Allow .env files for AI features (they're still gitignored for security)
+!.env
+!.env.local
+!backend/.env
+!backend/.env.local
+
+# Ignore other sensitive/unnecessary files
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+logs/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

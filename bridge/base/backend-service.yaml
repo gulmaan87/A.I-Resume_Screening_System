@@ -1,0 +1,23 @@
+# check if there is at least one published port
+
+#! backend-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: backend-published
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: backend
+spec:
+    selector:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: backend
+    ports:
+        - name: backend-8000
+          port: 8000
+          protocol: TCP
+          targetPort: backend-8000
+
+# check if there is at least one published port

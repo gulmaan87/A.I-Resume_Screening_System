@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resume-screening-config
+  namespace: resume-screening
+data:
+  # Application Configuration
+  APP_NAME: "AI Resume Screening"
+  API_PREFIX: "/api"
+  ENVIRONMENT: "production"
+  
+  # Database Configuration
+  DB_NAME: "Resume_Screening"
+  
+  # AWS Configuration
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "cvbucket87"
+  
+  # File Upload Configuration
+  RESUME_MAX_SIZE_MB: "10"
+  
+  # NLP Models Configuration
+  SPACY_MODEL: "en_core_web_sm"
+  EMBEDDING_MODEL_NAME: "sentence-transformers/all-MiniLM-L6-v2"
+  
+  # JWT Configuration
+  JWT_ALGORITHM: "HS256"
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  JWT_REFRESH_TOKEN_EXPIRE_DAYS: "7"
+  
+  # CORS Configuration (comma-separated)
+  ALLOWED_ORIGINS: "http://localhost:4173,https://yourdomain.com"
+  
+  # Frontend API Base URL (for build-time, update in deployment if needed)
+  VITE_API_BASE_URL: "http://backend-service.resume-screening.svc.cluster.local:8000"
+

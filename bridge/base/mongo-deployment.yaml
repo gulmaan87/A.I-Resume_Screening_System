@@ -1,0 +1,57 @@
+#! mongo-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: mongo
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: mongo
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: newfolder5
+            com.docker.compose.service: mongo
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: newfolder5
+                com.docker.compose.service: mongo
+                com.docker.compose.network.internal: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: resume-mongo
+                  image: mongo:6.0
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - mongod
+                    - --auth
+                  env:
+                    - name: MONGO_INITDB_DATABASE
+                      value: "resume_screening"
+                    - name: MONGO_INITDB_ROOT_PASSWORD
+                      value: "SecureMongoPassword123!"
+                    - name: MONGO_INITDB_ROOT_USERNAME
+                      value: "admin"
+                  livenessProbe:
+                    exec:
+                        command: [mongosh --eval db.adminCommand('ping')]
+                    periodSeconds: 10
+                    initialDelaySeconds: 30
+                    timeoutSeconds: 5
+                    failureThreshold: 5
+                  ports:
+                    - name: mongo-27017
+                      containerPort: 27017
+                  volumeMounts:
+                    - name: data-db
+                      mountPath: /data/db
+            volumes:
+                - name: data-db
+                  persistentVolumeClaim:
+                    claimName: mongo-mongo-data

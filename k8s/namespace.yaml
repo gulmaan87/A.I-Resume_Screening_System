@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resume-screening
+  labels:
+    name: resume-screening
+    environment: production
+
+

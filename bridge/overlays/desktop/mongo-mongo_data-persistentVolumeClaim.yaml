@@ -1,0 +1,9 @@
+#! mongo-mongo_data-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: mongo-mongo-data
+    namespace: newfolder5
+spec:
+    storageClassName: "hostpath" # see docker/desktop-storage-provisioner

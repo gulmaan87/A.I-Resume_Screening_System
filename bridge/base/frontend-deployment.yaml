@@ -1,0 +1,40 @@
+#! frontend-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: frontend
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: frontend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: newfolder5
+            com.docker.compose.service: frontend
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: newfolder5
+                com.docker.compose.service: frontend
+                com.docker.compose.network.external: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: resume-frontend
+                  image: newfolder5-frontend
+                  imagePullPolicy: IfNotPresent
+                  livenessProbe:
+                    exec:
+                        command: ['curl -f http://localhost:4173']
+                    periodSeconds: 30
+                    initialDelaySeconds: 20
+                    timeoutSeconds: 10
+                    failureThreshold: 3
+                  ports:
+                    - name: frontend-4173
+                      containerPort: 4173

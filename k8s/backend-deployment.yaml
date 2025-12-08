@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: resume-screening
+  labels:
+    app: backend
+    component: api
+spec:
+  replicas: 2  # Scale as needed
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        component: api
+    spec:
+      containers:
+      - name: backend
+        image: resume-backend:latest  # Update with your image registry
+        # image: your-registry/resume-backend:latest  # Example: docker.io/username/resume-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        # Application Config
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: APP_NAME
+        - name: API_PREFIX
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: API_PREFIX
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: ENVIRONMENT
+        # Database Config
+        - name: DB_URI
+          valueFrom:
+            secretKeyRef:
+              name: resume-screening-secrets
+              key: db-uri
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: DB_NAME
+        # AWS Config
+        - name: AWS_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resume-screening-secrets
+              key: aws-access-key
+        - name: AWS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resume-screening-secrets
+              key: aws-secret-key
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: AWS_REGION
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: S3_BUCKET_NAME
+        # JWT Config
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resume-screening-secrets
+              key: jwt-secret-key
+        - name: JWT_ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: JWT_ALGORITHM
+        - name: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        # NLP Config
+        - name: SPACY_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: SPACY_MODEL
+        - name: EMBEDDING_MODEL_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: EMBEDDING_MODEL_NAME
+        # File Upload Config
+        - name: RESUME_MAX_SIZE_MB
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: RESUME_MAX_SIZE_MB
+        # CORS Config
+        - name: ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: resume-screening-config
+              key: ALLOWED_ORIGINS
+        resources:
+          requests:
+            cpu: "2"
+            memory: "2Gi"
+          limits:
+            cpu: "4"
+            memory: "4Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      restartPolicy: Always
+
+

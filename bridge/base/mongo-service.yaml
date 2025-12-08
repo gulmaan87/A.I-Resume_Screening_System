@@ -1,0 +1,19 @@
+#! mongo-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: mongo-published
+    namespace: newfolder5
+    labels:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: mongo
+spec:
+    selector:
+        com.docker.compose.project: newfolder5
+        com.docker.compose.service: mongo
+    ports:
+        - name: mongo-27017
+          port: 27017
+          protocol: TCP
+          targetPort: mongo-27017

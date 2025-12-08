@@ -1,0 +1,18 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - 0-newfolder5-namespace.yaml
+    - backend-deployment.yaml
+    - backend-expose.yaml
+    - backend-service.yaml
+    - external-network-policy.yaml
+    - frontend-deployment.yaml
+    - frontend-expose.yaml
+    - frontend-service.yaml
+    - internal-network-policy.yaml
+    - mongo-deployment.yaml
+    - mongo-expose.yaml
+    - mongo-mongo_data-persistentVolumeClaim.yaml
+    - mongo-service.yaml

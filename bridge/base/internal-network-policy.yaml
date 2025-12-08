@@ -1,0 +1,24 @@
+#! internal-network-policy.yaml
+# Generated code, do not edit
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: internal-network-policy
+    namespace: newfolder5
+spec:
+    podSelector:
+        matchLabels:
+            com.docker.compose.network.internal: "true"
+    policyTypes:
+        - Ingress
+        - Egress
+    ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                    com.docker.compose.network.internal: "true"
+    egress:
+        - to:
+            - podSelector:
+                matchLabels:
+                    com.docker.compose.network.internal: "true"

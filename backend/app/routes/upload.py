@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -73,13 +74,27 @@ async def upload_resume(
         parsed = parser.parse(contents, resume.filename or "resume")
     except ResumeParserError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse resume: {str(exc)}"
+        ) from exc
 
     nlp_engine = get_nlp_engine()
-    nlp_entities = nlp_engine.extract_entities(parsed["clean_text"])
-    similarity_score = nlp_engine.similarity_score(parsed["clean_text"], job_description)
-    
-    # Predict category if model is available
-    predicted_category = nlp_engine.predict_category(parsed["clean_text"])
+    try:
+        nlp_entities = nlp_engine.extract_entities(parsed["clean_text"])
+        similarity_score = nlp_engine.similarity_score(parsed["clean_text"], job_description)
+        
+        # Predict category if model is available
+        predicted_category = nlp_engine.predict_category(parsed["clean_text"])
+    except Exception as exc:
+        # If NLP processing fails, use defaults but don't fail the entire request
+        logger = logging.getLogger(__name__)
+        logger.error(f"NLP processing failed: {type(exc).__name__}: {exc}", exc_info=True)
+        # Use empty entities and default similarity score
+        nlp_entities = {"skills": [], "organizations": [], "degrees": []}
+        similarity_score = 50.0
+        predicted_category = None
 
     scores = calculate_scores(
         found_skills=parsed["skills"],
@@ -124,8 +139,25 @@ async def upload_resume(
         "updated_at": datetime.now(timezone.utc),
     }
 
-    result = await db.candidates.insert_one(document)
-    document["id"] = str(result.inserted_id)
+    try:
+        result = await db.candidates.insert_one(document)
+        document["id"] = str(result.inserted_id)
+    except Exception as exc:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to save candidate to database: {type(exc).__name__}: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save candidate data: {str(exc)}"
+        ) from exc
 
-    return CandidateResponse(**document)
+    try:
+        return CandidateResponse(**document)
+    except Exception as exc:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create response model: {type(exc).__name__}: {exc}", exc_info=True)
+        logger.error(f"Document keys: {list(document.keys())}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create response: {str(exc)}"
+        ) from exc
 

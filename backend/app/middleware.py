@@ -44,6 +44,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "user_agent": request.headers.get("user-agent"),
             },
         )
+        
+        # In development, print request start to console
+        environment = getattr(request.app.state, "environment", "development")
+        if environment != "production":
+            print(f"📥 {request.method} {request.url.path}")
 
         try:
             response = await call_next(request)
@@ -60,6 +65,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     "process_time": round(process_time, 3),
                 },
             )
+            
+            # In development, print request summary to console
+            environment = getattr(request.app.state, "environment", "development")
+            if environment != "production":
+                status_emoji = "✅" if response.status_code < 400 else "⚠️" if response.status_code < 500 else "❌"
+                print(f"{status_emoji} {request.method} {request.url.path} -> {response.status_code} ({round(process_time, 3)}s)")
 
             response.headers["X-Process-Time"] = str(round(process_time, 3))
             return response

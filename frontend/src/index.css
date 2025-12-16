@@ -3,7 +3,37 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  @apply dark:bg-gradient-to-br dark:from-dark-900 dark:to-dark-700 dark:text-slate-100 bg-gradient-to-br from-[#14151d] to-[#25243a] font-sans antialiased;
+  min-height: 100vh;
+}
+
+/* Glassmorphism helpers */
+.glass {
+  background: rgba(24, 27, 38, 0.77); /* dark glass */
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px 0 rgba(10,20,40,0.24);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.glass-strong {
+  background: rgba(17, 20, 29, 0.93);
+  border-radius: 1.5rem;
+  box-shadow: 0 12px 48px 0 rgba(10,20,40,0.36);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1.5px solid rgba(255,255,255,0.16);
+}
+.glass-border-light {
+  border: 1px solid rgba(200,220,255,0.11);
+}
+
+::-webkit-scrollbar {
+  background: transparent;
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(60,60,80,0.28);
+  border-radius: 10px;
 }
 

@@ -7,7 +7,6 @@ from typing import AsyncIterator
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -15,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from .config import Settings, get_settings
+from .database_connection import connect_with_fallback
 from .exceptions import (
     general_exception_handler,
     http_exception_handler,
@@ -66,21 +66,58 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         extra={"request_id": "startup"},
     )
     
-    try:
-        app.state.mongo_client = AsyncIOMotorClient(settings.database_url)
-        app.state.mongo_db = app.state.mongo_client[settings.mongo_db_name]
-        # Test connection
-        await app.state.mongo_client.admin.command("ping")
+    # Connect to MongoDB with robust fallback handling
+    logger.info(
+        "Initializing MongoDB connection with DNS fallback and retry logic...",
+        extra={"request_id": "startup"},
+    )
+    
+    # Get fallback URI from environment or use default local
+    import os
+    fallback_uri = os.getenv("MONGO_FALLBACK_URI", None)
+    
+    client, db_name, connected = await connect_with_fallback(
+        primary_uri=settings.database_url,
+        fallback_uri=fallback_uri,
+        db_name=settings.mongo_db_name
+    )
+    
+    if connected and client:
+        app.state.mongo_client = client
+        app.state.mongo_db = client[db_name]
         logger.info(
-            "MongoDB connection established",
-            extra={"request_id": "startup", "database": settings.mongo_db_name},
-        )
-    except Exception as e:
-        logger.warning(
-            f"MongoDB connection failed: {e}. Continuing with limited functionality.",
+            f"✅ MongoDB connected successfully to database: {db_name}",
             extra={"request_id": "startup"},
         )
-        # Set to None so routes can handle gracefully
+    else:
+        logger.error(
+            "❌ CRITICAL: MongoDB connection failed. Database operations will not work.",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "Troubleshooting steps:",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "1. Check internet connection and DNS resolution",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "2. Verify MongoDB Atlas IP whitelist includes your IP (or 0.0.0.0/0 for testing)",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "3. Check firewall settings",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "4. For local development, start MongoDB: docker run -d -p 27017:27017 mongo:6.0",
+            extra={"request_id": "startup"},
+        )
+        logger.error(
+            "5. Set MONGO_FALLBACK_URI in .env to use a different fallback database",
+            extra={"request_id": "startup"},
+        )
         app.state.mongo_client = None
         app.state.mongo_db = None
     

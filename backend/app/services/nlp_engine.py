@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import pickle
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -60,8 +62,15 @@ class NLPEngine:
             classifier = get_category_classifier(self.settings)
             classifier.load()
             return classifier.predict(resume_text)
-        except (FileNotFoundError, ImportError):
-            # Model not trained yet
+        except (FileNotFoundError, ImportError, ValueError, AttributeError, EOFError, pickle.UnpicklingError) as e:
+            # Model not trained yet, corrupted, or other loading issues
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Category classifier not available: {type(e).__name__}: {e}")
+            return None
+        except Exception as e:
+            # Catch any other unexpected errors to prevent 500 errors
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Error predicting category: {type(e).__name__}: {e}", exc_info=True)
             return None
 
 

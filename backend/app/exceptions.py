@@ -31,6 +31,16 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
             "detail": str(exc.detail),
         },
     )
+    
+    # In development, also print to console for easier debugging
+    if not is_production:
+        print(f"\n{'='*60}")
+        print(f"HTTP EXCEPTION [{exc.status_code}]")
+        print(f"{'='*60}")
+        print(f"Path: {request.method} {request.url.path}")
+        print(f"Request ID: {request_id}")
+        print(f"Error: {exc.detail}")
+        print(f"{'='*60}\n")
 
     # Sanitize error message for production
     if is_production:
@@ -115,16 +125,32 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         },
         exc_info=True,
     )
+    
+    # In development, also print full details to console
+    if not is_production:
+        import traceback
+        print(f"\n{'='*60}")
+        print(f"❌ UNHANDLED EXCEPTION: {type(exc).__name__}")
+        print(f"{'='*60}")
+        print(f"Path: {request.method} {request.url.path}")
+        print(f"Request ID: {request_id}")
+        print(f"Error: {str(exc)}")
+        print(f"\nFull Stack Trace:")
+        print("-" * 60)
+        traceback.print_exc()
+        print(f"{'='*60}\n")
 
     # Never expose internal error details in production
     if is_production:
         message = "An internal error occurred. Please contact support."
         detail = None
     else:
-        message = f"An unexpected error occurred: {type(exc).__name__}: {str(exc)}"
+        # In development, provide more details but ensure message is always a string
+        error_msg = str(exc)
+        message = f"An unexpected error occurred: {type(exc).__name__}: {error_msg}"
         detail = {
             "exception_type": type(exc).__name__,
-            "exception_message": str(exc),
+            "exception_message": error_msg,
             "exception_args": str(exc.args) if hasattr(exc, 'args') else None,
         }
 
@@ -133,7 +159,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         content={
             "error": True,
             "status_code": 500,
-            "message": message,
+            "message": message,  # Always a string for frontend compatibility
             "request_id": request_id,
             **({"detail": detail} if detail else {}),
         },

@@ -6,11 +6,12 @@ import LoginPage from "./pages/Login.jsx";
 import RegisterPage from "./pages/Register.jsx";
 
 const navLinkClass = ({ isActive }) =>
-  `inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-    isActive ? "bg-primary-600 text-white shadow" : "text-slate-600 hover:bg-primary-100"
+  `inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition border border-transparent shadow hover:shadow-lg backdrop-blur-md ${
+    isActive
+      ? "bg-accent-vibrant/80 text-white border-accent-vibrant ring-2 ring-accent-vibrant/30 shadow-glassxl"
+      : "text-slate-300 hover:bg-dark-600/70 hover:text-white border-slate-700 hover:border-accent-vibrant"
   }`;
 
-// Protected route wrapper
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("access_token");
   if (!token) {
@@ -19,24 +20,31 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function App() {
+export default function App() {
   const token = localStorage.getItem("access_token");
-  
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     window.location.href = "/login";
   };
 
+  // Add dark mode class to <html> (ensure this on first render)
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.add("dark");
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative bg-gradient-to-br from-dark-900 via-dark-700 to-dark-900 flex flex-col">
       {token && (
-        <header className="bg-white border-b border-slate-200">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <div>
-              <h1 className="text-xl font-semibold text-primary-700">AI Resume Screening</h1>
-              <p className="text-sm text-slate-500">
-                Intelligent candidate insights for high-velocity hiring teams
+        <header className="glass strong fixed w-full z-30 shadow-xl dark:border-dark-800 border-b border-dark-800/80 dark:backdrop-blur-2xl dark:bg-backdrop dark:bg-opacity-85 ">
+          <div className="mx-auto max-w-6xl flex justify-between items-center px-6 py-4 ">
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-br from-accent-vibrant via-primary-500 to-accent-purple bg-clip-text text-transparent drop-shadow-xl select-none dark:drop-shadow-glassxl">
+                AI Resume Screening
+              </h1>
+              <p className="text-xs text-slate-400 font-medium mt-1">
+                Intelligent candidate insights for next-gen hiring teams
               </p>
             </div>
             <nav className="flex items-center gap-3">
@@ -50,7 +58,7 @@ function App() {
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-red-100 hover:text-red-600"
+                className="inline-flex items-center gap-2 rounded-lg border border-red-400 px-4 py-2 text-sm font-medium text-red-200 hover:bg-red-700/80 hover:text-white transition shadow hover:shadow-2xl"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
                 Logout
@@ -59,38 +67,40 @@ function App() {
           </div>
         </header>
       )}
-      <main className={token ? "mx-auto max-w-6xl px-6 py-10" : ""}>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <UploadPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
-        </Routes>
+      <main
+        className={`flex-grow flex justify-center pt-28 pb-16 transition-all duration-300 ${token ? "px-2" : ""}`}
+      >
+        <div className="w-full max-w-6xl mx-auto px-2 sm:px-8 flex flex-col gap-4">
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <UploadPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
+          </Routes>
+        </div>
       </main>
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-sm text-slate-500">
-          <p>© {new Date().getFullYear()} AI-Powered Resume Screening System</p>
+      <footer className="glass w-full border-t border-dark-800 dark:bg-backdrop dark:bg-opacity-50 shadow-t-xl">
+        <div className="mx-auto max-w-6xl flex items-center justify-between px-6 py-5 text-xs text-slate-400 font-medium">
+          <p>© {new Date().getFullYear()} AI Resume Screening System</p>
           <p>Secure · Scalable · Insightful</p>
         </div>
       </footer>
     </div>
   );
 }
-
-export default App;
 

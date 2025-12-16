@@ -1,7 +1,11 @@
 import axios from "axios";
 
-// Get API base URL from environment variable, with fallback
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// In development, use relative URLs so Vite proxy works
+// In production, use full backend URL
+const isDevelopment = import.meta.env.DEV;
+const apiBaseURL = isDevelopment 
+  ? "" // Empty baseURL in dev - use relative URLs, Vite proxy handles /api
+  : (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000");
 
 const apiClient = axios.create({
   baseURL: apiBaseURL,
@@ -38,6 +42,19 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Registration and login API calls using correct backend paths
+export function registerUser(data) {
+  // In dev: /api/auth/register → Vite proxy → http://localhost:8000/api/auth/register
+  // In prod: baseURL + /api/auth/register → https://api.example.com/api/auth/register
+  return apiClient.post('/api/auth/register', data);
+}
+
+export function loginUser(data) {
+  // In dev: /api/auth/login → Vite proxy → http://localhost:8000/api/auth/login
+  // In prod: baseURL + /api/auth/login → https://api.example.com/api/auth/login
+  return apiClient.post('/api/auth/login', data);
+}
 
 export default apiClient;
 

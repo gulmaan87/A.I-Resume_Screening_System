@@ -6,7 +6,10 @@
 !.env.local
 !backend/.env
 !backend/.env.local
-
+node_modules/
+.git/
+dist/
+build/
 # Ignore other sensitive/unnecessary files
 node_modules/
 venv/

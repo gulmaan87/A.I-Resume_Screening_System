@@ -69,17 +69,208 @@ class ComprehensiveModelTrainer:
         print(f"\n{'='*60}")
         print("📊 Loading Dataset")
         print(f"{'='*60}")
-        
+
         df = pd.read_csv(self.csv_path)
-        
+
         print(f"✅ Loaded {len(df)} rows")
-        print(f"   Columns: {list(df.columns)}")
-        
-        # Check required columns
-        required_cols = ['Resume', 'Job Roles', 'Job Description', 'Best Match']
+        print(f"   Original columns: {list(df.columns)}")
+
+        # Handle possible unnamed index column (e.g., leading empty header)
+        unnamed_cols = [c for c in df.columns if isinstance(c, str) and c.startswith("Unnamed")]
+        if unnamed_cols:
+            print(f"   Detected unnamed index columns: {unnamed_cols} -> dropping")
+            df = df.drop(columns=unnamed_cols)
+
+        # Normalize common alternative column names to expected ones
+        rename_map = {}
+
+        # Job description variations
+        if "Job Description" not in df.columns and "Job_Description" in df.columns:
+            rename_map["Job_Description"] = "Job Description"
+
+        # Best match label variations (e.g., 'Decision', 'Recruiter Decision')
+        if "Best Match" not in df.columns:
+            for alt in ["Decision", "Recruiter Decision", "Recruiter_Decision", "Label"]:
+                if alt in df.columns:
+                    rename_map[alt] = "Best Match_raw"
+                    break
+
+        # Apply renames
+        if rename_map:
+            print(f"   Normalizing column names: {rename_map}")
+            df = df.rename(columns=rename_map)
+
+        # If we created a temporary 'Best Match_raw' column from decisions, convert to numeric labels
+        if "Best Match" not in df.columns and "Best Match_raw" in df.columns:
+            print("   Converting decision values to binary 'Best Match' labels...")
+
+            def decision_to_label(value):
+                if pd.isna(value):
+                    return None
+                text = str(value).strip().lower()
+                if not text:
+                    return None
+
+                positive_values = {
+                    "accept",
+                    "accepted",
+                    "hire",
+                    "hired",
+                    "yes",
+                    "y",
+                    "true",
+                    "1",
+                    "match",
+                    "good match",
+                    "strong fit",
+                    "best match",
+                    "selected",
+                }
+                negative_values = {
+                    "reject",
+                    "rejected",
+                    "no",
+                    "n",
+                    "false",
+                    "0",
+                    "no match",
+                    "bad match",
+                    "weak fit",
+                    "not selected",
+                }
+
+                if text in positive_values:
+                    return 1
+                if text in negative_values:
+                    return 0
+
+                # Fall back: try to interpret as numeric
+                try:
+                    num = float(text)
+                    if num >= 0.5:
+                        return 1
+                    if num < 0.5:
+                        return 0
+                except ValueError:
+                    pass
+
+                # Unknown value -> drop this row later
+                return None
+
+            df["Best Match"] = df["Best Match_raw"].apply(decision_to_label)
+            before = len(df)
+            df = df.dropna(subset=["Best Match"])
+            df["Best Match"] = df["Best Match"].astype(int)
+            removed_decision = before - len(df)
+            if removed_decision > 0:
+                print(f"   Removed {removed_decision} rows with unknown 'Decision' values")
+
+        # Optional / derived Job Roles column
+        if "Job Roles" not in df.columns:
+            # Try to infer from other possible columns
+            inferred_role_col = None
+            for alt in ["Job Role", "Job_Title", "Job Title", "Role", "Position"]:
+                if alt in df.columns:
+                    inferred_role_col = alt
+                    break
+
+            if inferred_role_col:
+                print(f"   Inferring 'Job Roles' from '{inferred_role_col}'")
+                df["Job Roles"] = df[inferred_role_col].astype(str)
+            else:
+                # Fallback: create a single generic category so similarity model can still be trained
+                print("   'Job Roles' column missing; creating generic 'Unknown' role.")
+                df["Job Roles"] = "Unknown"
+
+        # Derive Best Match from numeric AI score if still missing
+        if "Best Match" not in df.columns and "AI Score (0-100)" in df.columns:
+            print("   Using 'AI Score (0-100)' to derive 'Best Match' (>=50 -> 1, <50 -> 0)")
+            df["Best Match"] = (df["AI Score (0-100)"].astype(float) >= 50).astype(int)
+
+        # Create synthetic Resume text if missing (for tabular datasets)
+        if "Resume" not in df.columns:
+            text_sources = []
+            for col in [
+                "Name",
+                "Skills",
+                "Education",
+                "Certifications",
+                "Projects Count",
+                "Projects",
+                "Experience (Years)",
+                "Experience",
+                "Summary",
+                "Profile",
+            ]:
+                if col in df.columns:
+                    text_sources.append(col)
+
+            if text_sources:
+                print(f"   Creating synthetic 'Resume' text from columns: {text_sources}")
+
+                def build_resume(row):
+                    parts = []
+                    for c in text_sources:
+                        val = row.get(c, "")
+                        if pd.isna(val):
+                            continue
+                        val_str = str(val).strip()
+                        if not val_str:
+                            continue
+                        # For skills, we don't need the label prefix
+                        if c.lower() == "skills":
+                            parts.append(val_str)
+                        else:
+                            parts.append(f"{c}: {val_str}")
+                    return " | ".join(parts)
+
+                df["Resume"] = df.apply(build_resume, axis=1)
+            else:
+                raise ValueError(
+                    "Missing 'Resume' column and no suitable text fields "
+                    "found to synthesize it."
+                )
+
+        # Create synthetic Job Description if missing
+        if "Job Description" not in df.columns:
+            role_col = "Job Roles" if "Job Roles" in df.columns else None
+            skills_col = "Skills" if "Skills" in df.columns else None
+            exp_col = None
+            for alt in ["Experience (Years)", "Experience"]:
+                if alt in df.columns:
+                    exp_col = alt
+                    break
+
+            print("   Creating synthetic 'Job Description' from available columns...")
+
+            def build_job_description(row):
+                role = str(row[role_col]).strip() if role_col else ""
+                skills = str(row[skills_col]).strip() if skills_col and not pd.isna(row.get(skills_col)) else ""
+                exp_val = None
+                if exp_col and not pd.isna(row.get(exp_col)):
+                    exp_val = str(row[exp_col]).strip()
+
+                desc_parts = []
+                if role:
+                    desc_parts.append(f"Job role: {role}.")
+                if skills:
+                    desc_parts.append(f"Looking for skills: {skills}.")
+                if exp_val:
+                    desc_parts.append(f"Preferred experience: {exp_val} years.")
+
+                if not desc_parts:
+                    return f"Job role: {role or 'Unknown role'}."
+                return " ".join(desc_parts)
+
+            df["Job Description"] = df.apply(build_job_description, axis=1)
+
+        print(f"   Normalized columns: {list(df.columns)}")
+
+        # Check required columns (Job Roles now guaranteed to exist)
+        required_cols = ["Resume", "Job Roles", "Job Description", "Best Match"]
         missing_cols = [col for col in required_cols if col not in df.columns]
         if missing_cols:
-            raise ValueError(f"Missing required columns: {missing_cols}")
+            raise ValueError(f"Missing required columns after normalization: {missing_cols}")
         
         # Clean data
         initial_count = len(df)

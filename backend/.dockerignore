@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+node_modules/
+*.csv
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Training data (can be large, mount as volume if needed)
+training_data/*
+!training_data/.gitkeep
+
+# Storage (mount as volume in production)
+storage/*
+!storage/.gitkeep
+
+# Trained models (can be mounted as volume or copied separately)
+# Uncomment if you want to exclude from image:
+# trained_models/*
+
+# Test files
+test_*.py
+*_test.py
+

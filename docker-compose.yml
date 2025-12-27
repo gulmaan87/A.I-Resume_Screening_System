@@ -65,7 +65,7 @@ services:
     container_name: resume-frontend
     restart: unless-stopped
     ports:
-      - "4173:4173"
+      - "0.0.0.0:4173:4173"
     depends_on:
       backend:
         condition: service_healthy

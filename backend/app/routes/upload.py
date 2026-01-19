@@ -16,6 +16,7 @@ from ..services.parser import ResumeParserError, get_parser
 from ..services.scorer import calculate_scores
 from ..services.storage import get_storage_client
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
 
 
@@ -89,7 +90,6 @@ async def upload_resume(
         predicted_category = nlp_engine.predict_category(parsed["clean_text"])
     except Exception as exc:
         # If NLP processing fails, use defaults but don't fail the entire request
-        logger = logging.getLogger(__name__)
         logger.error(f"NLP processing failed: {type(exc).__name__}: {exc}", exc_info=True)
         # Use empty entities and default similarity score
         nlp_entities = {"skills": [], "organizations": [], "degrees": []}
@@ -143,7 +143,6 @@ async def upload_resume(
         result = await db.candidates.insert_one(document)
         document["id"] = str(result.inserted_id)
     except Exception as exc:
-        logger = logging.getLogger(__name__)
         logger.error(f"Failed to save candidate to database: {type(exc).__name__}: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
@@ -153,7 +152,6 @@ async def upload_resume(
     try:
         return CandidateResponse(**document)
     except Exception as exc:
-        logger = logging.getLogger(__name__)
         logger.error(f"Failed to create response model: {type(exc).__name__}: {exc}", exc_info=True)
         logger.error(f"Document keys: {list(document.keys())}")
         raise HTTPException(

@@ -15,50 +15,22 @@ logger = logging.getLogger(__name__)
 
 def resolve_hostname_with_fallback(hostname: str, timeout: int = 5) -> Optional[str]:
     """
-    Resolve hostname using multiple DNS servers as fallback.
+    Resolve hostname using system DNS.
+    
+    Note: This function currently uses system DNS only. To use custom DNS servers,
+    the dnspython library would be required. The MongoDB driver will handle DNS
+    resolution during connection, so this is primarily for diagnostic purposes.
     
     Returns the IP address if successful, None otherwise.
     """
-    # List of DNS servers to try (Google DNS, Cloudflare DNS, OpenDNS)
-    dns_servers = [
-        ("8.8.8.8", 53),      # Google DNS
-        ("8.8.4.4", 53),      # Google DNS Secondary
-        ("1.1.1.1", 53),      # Cloudflare DNS
-        ("1.0.0.1", 53),      # Cloudflare DNS Secondary
-        ("208.67.222.222", 53),  # OpenDNS
-    ]
-    
-    # Try system DNS first
+    # Try system DNS
     try:
         ip = socket.gethostbyname(hostname)
         logger.debug(f"Resolved {hostname} to {ip} using system DNS")
         return ip
-    except socket.gaierror:
-        logger.debug(f"System DNS failed for {hostname}, trying fallback DNS servers...")
-    
-    # Try fallback DNS servers
-    for dns_ip, dns_port in dns_servers:
-        try:
-            # Create a socket and connect to DNS server
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(timeout)
-            
-            # Simple DNS query (this is a simplified version)
-            # For production, use dnspython library
-            try:
-                ip = socket.gethostbyname(hostname)
-                sock.close()
-                logger.info(f"Resolved {hostname} to {ip} using fallback DNS")
-                return ip
-            except socket.gaierror:
-                sock.close()
-                continue
-        except Exception as e:
-            logger.debug(f"DNS server {dns_ip} failed: {e}")
-            continue
-    
-    logger.warning(f"Could not resolve {hostname} using any DNS server")
-    return None
+    except socket.gaierror as e:
+        logger.debug(f"DNS resolution failed for {hostname}: {e}")
+        return None
 
 
 def enhance_mongodb_uri(uri: str) -> str:

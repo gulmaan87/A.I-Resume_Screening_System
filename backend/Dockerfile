@@ -1,3 +1,4 @@
+
 # Multi-stage build for optimized image size
 FROM python:3.10-slim AS builder
 
@@ -32,13 +33,14 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Copy requirements and install packages globally (not --user)
+COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Download spaCy model (with fallback options)
 RUN python -m spacy download en_core_web_sm || \
@@ -48,7 +50,6 @@ RUN python -m spacy download en_core_web_sm || \
 
 # Copy application code
 COPY app ./app
-COPY requirements.txt .
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/logs \
@@ -56,7 +57,7 @@ RUN mkdir -p /app/logs \
     /app/trained_models \
     /app/training_data
 
-# Create non-root user for security
+# Create non-root user and change ownership
 RUN useradd -m -u 1000 -s /bin/bash appuser && \
     chown -R appuser:appuser /app
 

@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 
 from ..database import get_database
+from ..dependencies.auth import get_current_active_user
 from ..services.model_training import get_model_trainer
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
@@ -26,19 +27,24 @@ class FeedbackRequest(BaseModel):
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def submit_feedback(
     feedback: FeedbackRequest,
+    current_user: dict = Depends(get_current_active_user),  # Authentication required
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Submit feedback to improve model accuracy.
     This feedback will be used for future model training.
     """
-    # Verify candidate exists
+    # Verify candidate exists and belongs to the current user
     from bson import ObjectId
     
     if not ObjectId.is_valid(feedback.candidate_id):
         raise HTTPException(status_code=404, detail="Candidate not found.")
     
-    candidate = await db.candidates.find_one({"_id": ObjectId(feedback.candidate_id)})
+    # Filter by candidate ID AND user ID to ensure users can only provide feedback on their own candidates
+    candidate = await db.candidates.find_one({
+        "_id": ObjectId(feedback.candidate_id),
+        "user_id": current_user["id"]
+    })
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found.")
     

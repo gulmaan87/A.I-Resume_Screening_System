@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 
 from ..database import get_database
+from ..dependencies.auth import get_current_active_user
 from ..models.candidate_model import CandidateResponse
 from ..services.nlp_engine import get_nlp_engine
 from ..services.scorer import calculate_scores
@@ -24,10 +25,18 @@ class ScreeningRequest(BaseModel):
 
 
 @router.get("/candidates/{candidate_id}", response_model=CandidateResponse)
-async def get_candidate(candidate_id: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+async def get_candidate(
+    candidate_id: str,
+    current_user: dict = Depends(get_current_active_user),  # Authentication required
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
     if not ObjectId.is_valid(candidate_id):
         raise HTTPException(status_code=404, detail="Candidate not found.")
-    document = await db.candidates.find_one({"_id": ObjectId(candidate_id)})
+    # Filter by candidate ID AND user ID to ensure users can only access their own candidates
+    document = await db.candidates.find_one({
+        "_id": ObjectId(candidate_id),
+        "user_id": current_user["id"]
+    })
     if not document:
         raise HTTPException(status_code=404, detail="Candidate not found.")
     document["id"] = str(document["_id"])

@@ -135,6 +135,7 @@ async def upload_resume(
         "parsed_entities": nlp_entities,
         "predicted_category": predicted_category.get("predicted_category") if predicted_category else None,
         "category_confidence": predicted_category.get("confidence") if predicted_category else None,
+        "user_id": current_user["id"],  # Link candidate to the authenticated user
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }

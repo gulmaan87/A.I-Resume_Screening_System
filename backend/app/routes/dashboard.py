@@ -50,7 +50,8 @@ async def get_dashboard(
     current_user: dict = Depends(get_current_active_user),  # Authentication required
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
-    cursor = db.candidates.find().sort("score.total_ai_score", -1)
+    # Filter candidates by the current user's ID
+    cursor = db.candidates.find({"user_id": current_user["id"]}).sort("score.total_ai_score", -1)
     candidates = [doc async for doc in cursor]
 
     serialized = [CandidateListItem(**_serialize_candidate(doc)) for doc in candidates]

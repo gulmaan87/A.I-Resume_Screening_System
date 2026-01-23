@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: resume-screening-backend
+    env: python
+    region: oregon
+    plan: starter
+    # Backend lives under the repo root at ./backend
+    rootDirectory: backend
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_sm || echo "Warning: spaCy model download failed, will attempt at runtime"
+    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --access-logfile - --error-logfile - --log-level info
+    healthCheckPath: /health
+    envVars:
+      # CRITICAL: Default Render Python is currently 3.13 which breaks spacy==3.7.x and torch==2.2.x
+      # Keep this on 3.11 for compatibility with the pinned deps in requirements.txt
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: APP_NAME
+        value: AI-Powered Resume Screening
+      - key: API_PREFIX
+        value: /api
+      # Add these in Render dashboard as Secrets:
+      # - DB_URI
+      # - DB_NAME
+      # - AWS_ACCESS_KEY
+      # - AWS_SECRET_KEY
+      # - AWS_REGION
+      # - S3_BUCKET_NAME
+      # - ALLOWED_ORIGINS
+      # - JWT_SECRET_KEY
+      - key: SPACY_MODEL
+        value: en_core_web_sm
+      - key: EMBEDDING_MODEL_NAME
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: RESUME_MAX_SIZE_MB
+        value: 10
+
+

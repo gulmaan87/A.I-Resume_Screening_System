@@ -5,7 +5,8 @@ services:
     region: oregon  # Options: oregon, frankfurt, singapore, mumbai, tokyo
     plan: starter  # Options: free, starter ($7/mo), standard ($25/mo), pro
     # IMPORTANT: Set root directory to backend folder
-    rootDirectory: A.I-Resume_Screening_System/backend
+    # Since the repo is already "A.I-Resume_Screening_System", backend is directly under it
+    rootDirectory: backend
     buildCommand: |
       pip install --upgrade pip setuptools wheel
       pip install -r requirements.txt

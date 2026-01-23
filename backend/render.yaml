@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: resume-screening-backend
+    env: python
+    region: oregon  # Options: oregon, frankfurt, singapore, mumbai, tokyo
+    plan: starter  # Options: free, starter ($7/mo), standard ($25/mo), pro
+    # IMPORTANT: Set root directory to backend folder
+    rootDirectory: A.I-Resume_Screening_System/backend
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_sm || echo "Warning: spaCy model download failed, will attempt at runtime"
+    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --access-logfile - --error-logfile - --log-level info
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: ENVIRONMENT
+        value: production
+      - key: APP_NAME
+        value: AI-Powered Resume Screening
+      - key: API_PREFIX
+        value: /api
+      # Database - Set these in Render Dashboard Environment Variables
+      # - key: DB_URI
+      #   value: mongodb+srv://user:password@cluster.mongodb.net/?retryWrites=true&w=majority
+      # - key: DB_NAME
+      #   value: Resume_Screening
+      # AWS/S3 - Set these in Render Dashboard Environment Variables
+      # - key: AWS_ACCESS_KEY
+      #   sync: false  # Mark as secret
+      # - key: AWS_SECRET_KEY
+      #   sync: false  # Mark as secret
+      # - key: AWS_REGION
+      #   value: us-east-1
+      # - key: S3_BUCKET_NAME
+      #   value: your-bucket-name
+      # CORS - Set these in Render Dashboard Environment Variables
+      # - key: ALLOWED_ORIGINS
+      #   value: https://your-frontend-domain.com
+      # JWT - Set these in Render Dashboard Environment Variables
+      # - key: JWT_SECRET_KEY
+      #   sync: false  # Mark as secret - Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+      # - key: JWT_ALGORITHM
+      #   value: HS256
+      # - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+      #   value: 30
+      # - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+      #   value: 7
+      # NLP Models
+      - key: SPACY_MODEL
+        value: en_core_web_sm
+      - key: EMBEDDING_MODEL_NAME
+        value: sentence-transformers/all-MiniLM-L6-v2
+      # File Upload
+      - key: RESUME_MAX_SIZE_MB
+        value: 10
+

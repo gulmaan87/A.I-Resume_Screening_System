@@ -1,0 +1,71 @@
+# Render ignore file - files/directories to exclude from deployment
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Environment files (use Render environment variables instead)
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local storage (use S3 in production)
+storage/resumes/
+
+# Training data and models (can be large - consider excluding or using external storage)
+training_data/
+trained_models/
+*.pkl
+*.h5
+*.pt
+*.pth
+
+# Documentation
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+# Docker (not needed for Render)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Scripts (optional - exclude if not needed in production)
+RUN_DEBUG_MODE.ps1
+test_*.py
+
+# CSV files (if large)
+*.csv
+!requirements.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
